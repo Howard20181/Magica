@@ -132,17 +132,20 @@ public final class MainActivity extends Activity {
         try {
             info = getPackageManager().getApplicationInfo("com.topjohnwu.magisk", 0);
         } catch (PackageManager.NameNotFoundException e) {
-            console.add(getString(R.string.magisk_package_not_installed));
-            console.add(getString(R.string.requires_latest_magisk_app));
-            return;
+            try {
+                info = getPackageManager().getApplicationInfo("io.github.vvb2060.magisk", 0);
+            } catch (PackageManager.NameNotFoundException ex) {
+                console.add(getString(R.string.magisk_package_not_installed));
+                console.add(getString(R.string.requires_latest_magisk_app));
+                return;
+            }
         }
 
         var cmd = "mkdir -p /dev/tmp/magica; unzip -o " + info.publicSourceDir +
                 " META-INF/com/google/android/update-binary -d /dev/tmp/magica;" +
                 "sh /dev/tmp/magica/META-INF/com/google/android/update-binary dummy 1 " + info.publicSourceDir;
 
-        try {
-            var apk = new ZipFile(info.publicSourceDir);
+        try (var apk = new ZipFile(info.publicSourceDir)) {
             var update = apk.getEntry("META-INF/com/google/android/update-binary");
             if (update != null) {
                 console.add(getString(R.string.tap_to_install_magisk));
